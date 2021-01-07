@@ -3,7 +3,7 @@ import React from 'react'
 import {ActivityIndicator,Text,FlatList, StyleSheet, View,TextInput,Button} from 'react-native'
 import FilmItem from './FilmItem'
 import {getFilmsFromApiWithSearchedText } from '../API/TMDBApi'
-
+import { connect } from 'react-redux'
 class Search extends React.Component{
   constructor(props){
     super(props)
@@ -62,6 +62,7 @@ class Search extends React.Component{
         <Button style={{height: 50}} title="Rechercher" onPress={()=> this._searchFilms()}/>
         <FlatList
           data ={this.state.films}
+          extraData={this.props.favoritesFilm}
           keyExtractor={(item)=> item.id.toString()}
           onEndReachThreashold ={0.5}
           onEndReached={()=>{
@@ -69,7 +70,13 @@ class Search extends React.Component{
               this._loadFilms()
             }}
           }
-          renderItem={({item})=> <FilmItem film={item} displayDetailForFilm ={this._displayDetailForFilm}/>}
+          renderItem={({item})=>
+            <FilmItem
+            film={item}
+            displayDetailForFilm ={this._displayDetailForFilm}
+            isFilmFavorite = {(this.props.favoritesFilm.findIndex(film => film.id === item.id)!== -1)? true:false}
+          />}
+
         />
           {this._displayLoding()}
       </View>
@@ -99,4 +106,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center'
   }
 });
-export default Search
+
+const mapStateToProps = (state) => {
+  return{
+    favoritesFilm : state.favoritesFilm
+  }
+}
+
+export default  connect(mapStateToProps)(Search)
