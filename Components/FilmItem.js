@@ -3,7 +3,7 @@
 import React from 'react'
 import { StyleSheet, View, Text, Image ,TouchableOpacity} from 'react-native'
 import {getImageFromApi} from '../API/TMDBApi'
-
+import FilmList from './FilmList'
 class FilmItem extends React.Component {
   _displayFilmFavorite(){
     if(this.props.isFilmFavorite){
@@ -20,7 +20,7 @@ class FilmItem extends React.Component {
     const {film,displayDetailForFilm} = this.props
     return (
       <TouchableOpacity
-      onPress = {()=>displayDetailForFilm(film.id)}
+      onPress = {() => displayDetailForFilm(film.id)}
       style={styles.main_container}>
         <Image
           style={styles.image}
