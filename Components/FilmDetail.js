@@ -1,21 +1,61 @@
 // Components/FilmDetail.js
 
 import React from 'react'
-import { StyleSheet, View, Text, ActivityIndicator, ScrollView, Image, TouchableOpacity } from 'react-native'
+import { StyleSheet,Platform, View,Share, Text, ActivityIndicator, ScrollView, Image, TouchableOpacity } from 'react-native'
 import { getFilmDetailFromApi, getImageFromApi } from '../API/TMDBApi'
 import moment from 'moment'
 import numeral from 'numeral'
 import { connect } from 'react-redux'
+import EnlargeShink from '../Animations/EnlargeShink'
 
 class FilmDetail extends React.Component {
-  constructor(props) {
-    super(props)
-    this.state = {
-      film: undefined,
-      isLoading: false
+  static navigationOptions = ({navigation}) =>{
+    const {params} = navigation.state
+    if(params.film != undefined && Platform.OS === 'ios'){
+      return {
+      headerRight: <TouchableOpacity
+                  style={styles.share_touchable_headerrightbutton}
+                  onPress={() => params.shareFilm()} >
+                  <Image
+                    style={styles.share_image}
+                    source={require('../Images/ic_share.png')} />
+                </TouchableOpacity>
+      }
     }
   }
+  constructor(props) {
+    super(props)
+      film: undefined,
+      this.state = {
+      isLoading: false
+    }
+  this._shareFilm = this._shareFilm.bind(this)
+  }
+  _updateNavigationParam(){
+    this.props.navigation.setParams({
+      shareFilm : this._shareFilm,
+      film : this.state.film
+    })
+  }
+  _shareFilm(){
+    const {film } = this.state
+    Share.share({title:film.title,message : film.overview})
+  }
+  _displayFloatingActionButton(){
+    const {film } = this.state
+    if(film != undefined && Platform.OS === 'android'){
+      return(
+          <TouchableOpacity
+            style={styles.share_touchable_floatingactionbutton}
+            onPress={() => this._shareFilm()} >
+            <Image
+            style ={styles.share_image}
+            source = {require('../Images/ic_share.png')} />
+          </TouchableOpacity>
+      )
+    }
 
+  }
   componentDidMount() {
     const favoriteFilmIndex = this.props.favoritesFilm.findIndex(item => item.id === this.props.navigation.state.params.idFilm)
     if (favoriteFilmIndex !== -1) { // Film déjà dans nos favoris, on a déjà son détail
@@ -32,7 +72,8 @@ class FilmDetail extends React.Component {
       this.setState({
         film: data,
         isLoading: false
-      })
+      },()=>{this._updateNavigationParam()})
+      return
     })
   }
 
@@ -53,15 +94,20 @@ class FilmDetail extends React.Component {
 
   _displayFavoriteImage() {
     var sourceImage = require('../Images/ic_favorite_border.png')
+    var shouldEnlarge = false
     if (this.props.favoritesFilm.findIndex(item => item.id === this.state.film.id) !== -1) {
       // Film dans nos favoris
       sourceImage = require('../Images/ic_favorite.png')
+      shouldEnlarge = true
     }
     return (
-      <Image
-        style={styles.favorite_image}
-        source={sourceImage}
-      />
+      <EnlargeShink
+      shouldEnlarge = {shouldEnlarge}>
+        <Image
+          style={styles.favorite_image}
+          source={sourceImage}
+        />
+      </EnlargeShink>
     )
   }
 
@@ -103,6 +149,7 @@ class FilmDetail extends React.Component {
       <View style={styles.main_container}>
         {this._displayLoading()}
         {this._displayFilm()}
+        {this._displayFloatingActionButton()}
       </View>
     )
   }
@@ -155,9 +202,28 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   favorite_image: {
-    width: 40,
-    height: 40
-  }
+    flex : 1,
+    width: null,
+    height: null
+  },
+  share_touchable_floatingactionbutton: {
+    position: 'absolute',
+    width: 60,
+    height: 60,
+    right: 30,
+    bottom: 30,
+    borderRadius: 30,
+    backgroundColor: '#e91e63',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  share_image: {
+    width: 30,
+    height: 30
+  },
+  share_touchable_headerrightbutton: {
+   marginRight: 8
+ }
 })
 
 const mapStateToProps = (state) => {
